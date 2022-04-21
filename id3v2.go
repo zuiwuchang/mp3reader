@@ -1,11 +1,37 @@
 package mp3reader
 
+import "fmt"
+
 type ID3V2 struct {
 	rawHeader []byte
+	raw       []byte
 }
 
+func (v2 ID3V2) String() string {
+	if v2.rawHeader != nil {
+		f0, f1, f2 := v2.Flag()
+		return fmt.Sprintf(`ID3V2{
+	%s, version=%d, revision=%d, flag=%v %v %v, size=%d
+	len(frame)=%d
+}`,
+			v2.TAG(),
+			v2.Version(), v2.Revision(),
+			f0, f1, f2,
+			v2.Size(),
+			len(v2.raw),
+		)
+	}
+	return `ID3V2{}`
+}
+
+// return raw of header
 func (v2 ID3V2) RawHeader() []byte {
 	return v2.rawHeader
+}
+
+// return raw of frame
+func (v2 ID3V2) Raw() []byte {
+	return v2.raw
 }
 func (v2 ID3V2) TAG() string {
 	if v2.rawHeader != nil {

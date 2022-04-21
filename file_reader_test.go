@@ -10,40 +10,82 @@ import (
 )
 
 func TestFileReader(t *testing.T) {
-	{
-		f, e := os.OpenFile("bin/a.mp3", os.O_RDONLY|os.O_WRONLY, 0)
-		if e != nil {
-			return
-		}
-		_, e = f.Seek(-128, io.SeekEnd)
-		if e != nil {
-			return
-		}
-		_, e = f.Seek(33, io.SeekCurrent)
-		if e != nil {
-			return
-		}
-		_, e = f.Write([]byte("梅豔芳"))
-		if e != nil {
-			return
-		}
-	}
-
-	f, e := os.Open("bin/a.mp3")
+	filename := "bin/a.mp3"
+	filename = "bin/b.mp3"
+	filename = "bin/0.mp3"
+	f, e := os.Open(filename)
 	if e != nil {
 		t.Fatal(e)
 	}
 	defer f.Close()
-	r, e := mp3reader.NewFileReader(f)
+	r, e := mp3reader.NewFileReader(f, mp3reader.WithFileReaderAllowInvalidFrame(false))
 	if e != nil {
 		t.Fatal(e)
 	}
 	fmt.Println(r.V1)
-	fmt.Println(r.V1.Raw())
-	// b, e := ioutil.ReadFile("bin/a.mp3")
+	fmt.Println(r.V2)
+	total := 0
+	for i := 0; i < 2; i++ {
+		frame, e := r.ReadFrame()
+		if e != nil {
+			if e != io.EOF {
+				t.Fatal(e)
+			}
+			return
+		}
+
+		fmt.Println(total, frame)
+		total++
+	}
+	// return
+	for {
+		frame, e := r.ReadFrame()
+		if e != nil {
+			if e != io.EOF {
+				t.Fatal(e)
+			}
+			break
+		}
+
+		fmt.Println(total, frame)
+		total++
+	}
+
+	// dst, e := os.Create("bin/b.mp3")
 	// if e != nil {
 	// 	t.Fatal(e)
 	// }
-	// fmt.Println(string(b[:10]))
-	// fmt.Println(string(b[len(b)-128:]))
+	// defer dst.Close()
+	// n, e := io.Copy(dst, r.R())
+	// if e != nil {
+	// 	t.Fatal(e)
+	// }
+	// fmt.Println(n)
+
+	// dst, e := os.Create("bin/ok.mp3")
+	// if e != nil {
+	// 	t.Fatal(e)
+	// }
+	// defer dst.Close()
+	// for {
+	// 	frame, e := r.ReadFrame()
+	// 	if e != nil {
+	// 		if e != io.EOF  {
+	// 			t.Fatal(e)
+	// 		}
+	// 		break
+	// 	}
+	// 	_, e = dst.Write(frame.Header().Raw())
+	// 	if e != nil {
+	// 		t.Fatal(e)
+	// 	}
+	// 	_, e = dst.Write(frame.CRC())
+	// 	if e != nil {
+	// 		t.Fatal(e)
+	// 	}
+	// 	_, e = dst.Write(frame.Raw())
+	// 	if e != nil {
+	// 		t.Fatal(e)
+	// 	}
+	// }
 }
