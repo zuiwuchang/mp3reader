@@ -11,7 +11,7 @@ import (
 
 func TestFileReader(t *testing.T) {
 	filename := "bin/a.mp3"
-	filename = "bin/b.mp3"
+	// filename = "bin/b.mp3"
 	filename = "bin/0.mp3"
 	f, e := os.Open(filename)
 	if e != nil {
@@ -22,9 +22,11 @@ func TestFileReader(t *testing.T) {
 	if e != nil {
 		t.Fatal(e)
 	}
+	fmt.Println(r.Duration(), r.Frames())
 	fmt.Println(r.V1)
 	fmt.Println(r.V2)
-	total := 0
+
+	frames := 0
 	for i := 0; i < 2; i++ {
 		frame, e := r.ReadFrame()
 		if e != nil {
@@ -34,10 +36,10 @@ func TestFileReader(t *testing.T) {
 			return
 		}
 
-		fmt.Println(total, frame)
-		total++
+		fmt.Println(frames, frame)
+		frames++
 	}
-	// return
+
 	for {
 		frame, e := r.ReadFrame()
 		if e != nil {
@@ -47,10 +49,10 @@ func TestFileReader(t *testing.T) {
 			break
 		}
 
-		fmt.Println(total, frame)
-		total++
+		fmt.Println(frames, frame)
+		frames++
 	}
-
+	fmt.Println(`frames=`, frames, r.Frames())
 	// dst, e := os.Create("bin/b.mp3")
 	// if e != nil {
 	// 	t.Fatal(e)

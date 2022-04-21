@@ -69,7 +69,7 @@ func (f FrameHeader) Layer() Layer {
 
 func (f FrameHeader) CRC() bool {
 	low := uint8(f.flag())
-	return low&0x1 != 0
+	return low&0x1 == 0
 }
 
 var bitrates = [2][3][16]int{
@@ -204,7 +204,15 @@ func (f FrameHeader) FrameSize() int {
 			return -1
 		}
 	}
-	return samples/8*bitrate/samplerate + padding
+	val := samples/8*bitrate/samplerate + padding
+	min := 4 + 32
+	if f.CRC() {
+		min += 2
+	}
+	if val < min {
+		return -1
+	}
+	return val
 }
 
 func (f FrameHeader) Duration() time.Duration {

@@ -2,15 +2,24 @@ package mp3reader
 
 import (
 	"bufio"
+	"encoding/binary"
 	"errors"
 	"io"
+	"time"
 )
 
 type FileReader struct {
-	*FrameReader
-	size int64
-	V2   ID3V2
-	V1   ID3V1
+	frameReader *FrameReader
+	size        int64
+	V2          ID3V2
+	V1          ID3V1
+
+	first *Frame
+	cache *Frame
+
+	duration time.Duration
+	frames   int64
+	index    int64
 }
 
 func NewFileReader(f io.ReadSeeker, opt ...FileReaderOption) (r *FileReader, e error) {
@@ -25,7 +34,6 @@ func NewFileReader(f io.ReadSeeker, opt ...FileReaderOption) (r *FileReader, e e
 		v2 ID3V2
 		v1 ID3V1
 	)
-
 	// v1
 	if size > 128 {
 		_, e = f.Seek(-128, io.SeekEnd)
@@ -85,14 +93,90 @@ func NewFileReader(f io.ReadSeeker, opt ...FileReaderOption) (r *FileReader, e e
 	if opts.bufferSize > 0 {
 		reader = bufio.NewReaderSize(reader, opts.bufferSize)
 	}
+	frameReader := NewFrameReader(
+		reader,
+		WithReaderAllowInvalidFrame(opts.allowInvalidFrame),
+	)
+	first, e := frameReader.ReadFrame()
+	if e != nil {
+		return
+	}
+	dataSize := size - int64(len(v1.raw)) - limit
+	frames, duration := getDuration(first, dataSize)
+
 	r = &FileReader{
-		FrameReader: NewFrameReader(
-			reader,
-			WithReaderAllowInvalidFrame(opts.allowInvalidFrame),
-		),
-		size: size,
-		V2:   v2,
-		V1:   v1,
+		frameReader: frameReader,
+		size:        dataSize,
+		V2:          v2,
+		V1:          v1,
+		first:       first,
+		cache:       first,
+		duration:    duration,
+		frames:      frames,
 	}
 	return
+}
+
+func (r *FileReader) ReadFrame() (frame *Frame, e error) {
+	if r.cache != nil {
+		frame = r.cache
+		r.cache = nil
+		return
+	}
+	if r.index >= r.frames {
+		e = io.EOF
+		return
+	}
+	frame, e = r.frameReader.ReadFrame()
+	r.index++
+	return
+}
+func (f *FileReader) Duration() time.Duration {
+	return f.duration
+}
+func (f *FileReader) Frames() int64 {
+	return f.frames
+}
+func getDuration(frame *Frame, dataSize int64) (int64, time.Duration) {
+	raw := frame.raw
+	if frame.header.CRC() {
+		raw = raw[2:]
+	}
+	version := frame.header.Version()
+	if version == Version1 {
+		if frame.header.Channels() == 1 {
+			raw = raw[17:]
+		} else {
+			raw = raw[32:]
+		}
+	} else {
+		if frame.header.Channels() == 1 {
+			raw = raw[9:]
+		} else {
+			raw = raw[17:]
+		}
+	}
+
+	tag := string(raw[:4])
+	if tag == "Info" || tag == "Xing" {
+		raw = raw[4:]
+		flag := binary.BigEndian.Uint32(raw)
+		raw = raw[4:]
+		if flag&0x1 != 0 {
+			frames := int64(binary.BigEndian.Uint32(raw))
+			return frames, time.Duration(frames) * frame.header.Duration()
+		}
+		if flag&0x2 != 0 {
+			size := binary.BigEndian.Uint32(raw)
+			raw = raw[4:]
+			dataSize = int64(size)
+		}
+	}
+	l := len(frame.header.raw) + len(frame.raw)
+	return -1, time.Duration(dataSize/int64(l)) * frame.header.Duration()
+}
+
+func Duration(frame *Frame, dataSize int64) time.Duration {
+	_, val := getDuration(frame, dataSize)
+	return val
 }
