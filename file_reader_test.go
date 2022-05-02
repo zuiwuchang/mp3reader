@@ -12,7 +12,7 @@ import (
 func TestFileReader(t *testing.T) {
 	filename := "bin/a.mp3"
 	// filename = "bin/b.mp3"
-	filename = "bin/0.mp3"
+	// filename = "bin/0.mp3"
 	f, e := os.Open(filename)
 	if e != nil {
 		t.Fatal(e)
@@ -53,41 +53,4 @@ func TestFileReader(t *testing.T) {
 		frames++
 	}
 	fmt.Println(`frames=`, frames, r.Frames())
-	// dst, e := os.Create("bin/b.mp3")
-	// if e != nil {
-	// 	t.Fatal(e)
-	// }
-	// defer dst.Close()
-	// n, e := io.Copy(dst, r.R())
-	// if e != nil {
-	// 	t.Fatal(e)
-	// }
-	// fmt.Println(n)
-
-	// dst, e := os.Create("bin/ok.mp3")
-	// if e != nil {
-	// 	t.Fatal(e)
-	// }
-	// defer dst.Close()
-	// for {
-	// 	frame, e := r.ReadFrame()
-	// 	if e != nil {
-	// 		if e != io.EOF  {
-	// 			t.Fatal(e)
-	// 		}
-	// 		break
-	// 	}
-	// 	_, e = dst.Write(frame.Header().Raw())
-	// 	if e != nil {
-	// 		t.Fatal(e)
-	// 	}
-	// 	_, e = dst.Write(frame.CRC())
-	// 	if e != nil {
-	// 		t.Fatal(e)
-	// 	}
-	// 	_, e = dst.Write(frame.Raw())
-	// 	if e != nil {
-	// 		t.Fatal(e)
-	// 	}
-	// }
 }

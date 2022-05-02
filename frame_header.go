@@ -224,5 +224,5 @@ func (f FrameHeader) Duration() time.Duration {
 	if samplerate == -1 {
 		return -1
 	}
-	return time.Duration(samples*1000/samplerate) * time.Millisecond
+	return time.Duration(samples) * 1000 * 1000 * 1000 / time.Duration(samplerate) * time.Nanosecond
 }

@@ -79,10 +79,10 @@ type Frame struct {
 func (f *Frame) String() string {
 	return fmt.Sprintf(`Frame{
 	%s
-	raw=%d
+	raw=%d duration=%s
 }`,
 		f.header,
-		len(f.raw),
+		len(f.raw), f.header.Duration(),
 	)
 }
 func (f *Frame) Header() FrameHeader {
