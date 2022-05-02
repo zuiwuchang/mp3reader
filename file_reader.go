@@ -168,7 +168,6 @@ func getDuration(frame *Frame, dataSize int64) (int64, time.Duration) {
 		}
 		if flag&0x2 != 0 {
 			size := binary.BigEndian.Uint32(raw)
-			raw = raw[4:]
 			dataSize = int64(size)
 		}
 	}
