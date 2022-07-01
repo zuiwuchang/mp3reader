@@ -123,7 +123,7 @@ func (r *FileReader) ReadFrame() (frame *Frame, e error) {
 		r.cache = nil
 		return
 	}
-	if r.index >= r.frames {
+	if r.frames > 0 && r.index >= r.frames {
 		e = io.EOF
 		return
 	}

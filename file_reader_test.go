@@ -10,9 +10,10 @@ import (
 )
 
 func TestFileReader(t *testing.T) {
-	filename := "bin/a.mp3"
+	// filename := "bin/a.mp3"
 	// filename = "bin/b.mp3"
 	// filename = "bin/0.mp3"
+	filename := "bin/16.mp3"
 	f, e := os.Open(filename)
 	if e != nil {
 		t.Fatal(e)
@@ -52,5 +53,5 @@ func TestFileReader(t *testing.T) {
 		fmt.Println(frames, frame)
 		frames++
 	}
-	fmt.Println(`frames=`, frames, r.Frames())
+	fmt.Println(`frames=`, frames, r.Frames(), r.Duration())
 }
